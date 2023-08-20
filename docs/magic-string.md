@@ -24,7 +24,7 @@ source map 文件包含有关编译后的代码如何映射到原始代码的基
 
 source map 最关键的方面是 mappings 字段。它使用 VLQ Base 64 编码字符串将 bundle 产物文件中的行和位置映射到相应的原始文件。可以使用 source map 可视化工具[source-map-visualization](https://sokra.github.io/source-map-visualization/#sass)、[Source Map Visualization](https://evanw.github.io/source-map-visualization/) 来可视化此映射。
 
-[解开 mappings 字段](../example/magic-string/result)
+[解开 mappings 字段](../example/magic-string/app.js.mappings.json)
 
 ```
 "mappings": {
