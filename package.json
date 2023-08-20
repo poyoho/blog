@@ -1,10 +1,23 @@
 {
   "scripts": {
+    "format": "prettier --write .",
     "magic-string": "node ./executable/magic-string/build.js"
   },
   "devDependencies": {
     "concat-stream": "^2.0.0",
     "vlq": "^2.0.4",
-    "magic-string": "^0.19.0"
+    "magic-string": "^0.19.0",
+    "prettier": "2.5.1",
+    "picocolors": "^1.0.0",
+    "simple-git-hooks": "^2.7.0",
+    "lint-staged": "^12.3.3"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "pnpm exec lint-staged --concurrent false"
+  },
+  "lint-staged": {
+    "*": [
+      "prettier --write --ignore-unknown"
+    ]
   }
 }

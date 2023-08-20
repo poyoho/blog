@@ -1,2 +1,3 @@
-var answer = 'no';console.log( answer );
+var answer = 'no'
+console.log(answer)
 //# sourceMappingURL=app.js.map

@@ -1,2 +1,2 @@
-var foo = 'yes';
-console.log( foo );
+var foo = 'yes'
+console.log(foo)

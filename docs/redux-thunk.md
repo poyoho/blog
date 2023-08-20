@@ -1,10 +1,10 @@
 # redux-thunk
 
-redux-thunk是一个让redux支持异步的中间件，一句话概括就是使用`compose`阻断`dispatch`原来的行为 等到cb的时候再执行原来的dispatch。
+redux-thunk 是一个让 redux 支持异步的中间件，一句话概括就是使用`compose`阻断`dispatch`原来的行为 等到 cb 的时候再执行原来的 dispatch。
 
 ## redux middleware
 
-先看看redux中间件的定义。目的是允许用户在创建redux store的时候，对store进行扩展，比如说添加日志，异步等功能。
+先看看 redux 中间件的定义。目的是允许用户在创建 redux store 的时候，对 store 进行扩展，比如说添加日志，异步等功能。
 
 ```ts
 export default function applyMiddleware(
@@ -27,7 +27,7 @@ export default function applyMiddleware(
         getState: store.getState,
         dispatch: (action, ...args) => dispatch(action, ...args)
       }
-      const chain = middlewares.map(middleware => middleware(middlewareAPI))
+      const chain = middlewares.map((middleware) => middleware(middlewareAPI))
       dispatch = compose<typeof dispatch>(...chain)(store.dispatch)
 
       return {
@@ -38,7 +38,7 @@ export default function applyMiddleware(
 }
 ```
 
-可以看到，redux中间件的核心就是`compose`，`compose`的作用就是将多个函数组合成一个函数，从右到左执行。比如说`compose(f, g, h)`就是`(...args) => f(g(h(...args)))`。
+可以看到，redux 中间件的核心就是`compose`，`compose`的作用就是将多个函数组合成一个函数，从右到左执行。比如说`compose(f, g, h)`就是`(...args) => f(g(h(...args)))`。
 
 ```ts
 export default function compose(...funcs: Function[]) {
@@ -61,9 +61,9 @@ export default function compose(...funcs: Function[]) {
 
 ## thunk
 
-redux-thunk的实现就是在`dispatch`的时候，判断`action`的类型，如果是函数就执行，如果是对象就直接`dispatch`。
+redux-thunk 的实现就是在`dispatch`的时候，判断`action`的类型，如果是函数就执行，如果是对象就直接`dispatch`。
 
-因为在middleware中改写了dispatch，所以当我们在action中调用dispatch的时候，实际上是调用的改写后的dispatch，所以可以在action中执行异步操作。
+因为在 middleware 中改写了 dispatch，所以当我们在 action 中调用 dispatch 的时候，实际上是调用的改写后的 dispatch，所以可以在 action 中执行异步操作。
 
 ```ts
 function createThunkMiddleware<
@@ -75,8 +75,8 @@ function createThunkMiddleware<
   // See: https://redux.js.org/tutorials/fundamentals/part-4-store#writing-custom-middleware
   const middleware: ThunkMiddleware<State, BasicAction, ExtraThunkArg> =
     ({ dispatch, getState }) =>
-    next =>
-    action => {
+    (next) =>
+    (action) => {
       // The thunk middleware looks for any functions that were passed to `store.dispatch`.
       // If this "action" is really a function, call it and return the result.
       if (typeof action === 'function') {
