@@ -1,0 +1,1 @@
+{"version":3,"file":"app.js.map","sources":["app.source.js"],"sourcesContent":["var foo = 'yes';\nconsole.log( foo );"],"names":["foo","\n","yes"],"mappings":"AAAA,CAAC,CAAC,CAAC,CAACA,MAAG,CAAC,CAAC,CAAC,CAACE,EAAG,CAAC,CAAC,AAChB,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,CAACF,MAAG,CAAC,CAAC"}
