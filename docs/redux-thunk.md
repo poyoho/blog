@@ -4,7 +4,7 @@ redux-thunk 是一个让 redux 支持异步的中间件，一句话概括就是�
 
 ## redux middleware
 
-先看看 redux 中间件的定义。目的是允许用户在创建 redux store 的时候，对 store 进行扩展，比如说添加日志，异步等功能。
+先看看 redux 中间件的定义，目的是允许用户在创建 redux store 的时候，对 store 进行扩展，比如说添加日志，异步等功能。
 
 ```ts
 export default function applyMiddleware(
