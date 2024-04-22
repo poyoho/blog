@@ -572,3 +572,60 @@ int dictRehash(dict *d, int n) {
 ```
 
 ## ZipList
+
+ziplist 通过将多个元素存储在一段连续的内存空间中来节省内存，同时也减少了内存碎片化的问题。ziplist 主要用于存储较小的列表或哈希表，它的设计目标是在内存占用和性能之间取得平衡。
+不过，ziplist 也有一些限制，包括不能直接删除或插入元素，因为要维护整个列表的内存连续，需要进行整个列表的重建；在存储大型数据时，ziplist 可能就不太适合，申请大片的连续内存空间其实比较困难，所以不能添加过多的数据。
+
+### ziplist 的内存结构
+
+```text
+<zlbytes> <zltail> <zllen> <entry> <entry> ... <entry> <zlend>
+```
+
+- zlbytes: 总字节数
+- zltail: 尾节点偏移量
+- zllen: 列表长度
+- zlend: 结束标识
+
+ziplist 不使用结构体的主要原因是为了节省内存空间和提高访问效率。
+
+1. 节省内存空间：在 C 语言中，结构体（struct）的内存布局是连续的，但并不是绝对的连续内存块。使用结构体会引入额外的指针或元数据，增加每个元素的存储空间。而 ziplist 的设计是为了尽量紧凑地存储元素，将多个元素存储在连续的内存空间中，因此不采用结构体可以节省内存空间。
+2. 提高访问效率：由于元素存储在连续的内存空间中，不采用结构体可以简化访问和遍历元素的过程，提高访问效率。使用结构体会引入额外的指针操作，可能会降低访问效率。
+
+新建一个 ziplist 会根据上面的结构创建。
+
+```c
+/* Create a new empty ziplist. */
+unsigned char *ziplistNew(void) {
+    unsigned int bytes = ZIPLIST_HEADER_SIZE+ZIPLIST_END_SIZE;
+    unsigned char *zl = zmalloc(bytes);
+    ZIPLIST_BYTES(zl) = intrev32ifbe(bytes);
+    ZIPLIST_TAIL_OFFSET(zl) = intrev32ifbe(ZIPLIST_HEADER_SIZE);
+    ZIPLIST_LENGTH(zl) = 0;
+    zl[bytes-1] = ZIP_END;
+    return zl;
+}
+```
+
+### ziplist entries 的内存结构
+
+可以实现双端遍历。
+
+> 缺点：
+>
+> 连锁更新问题(`__ziplistCascadeUpdate`)，如果有 N 个连续长度在边界的 entry，比如长度为 250~253 长度的 entry，在其中一个更新后，后面的所有的 entry 都要进行扩容更新。
+
+```text
+<prevlen> <encoding> <entry-data>
+```
+
+- prevlen: 前一个元素的长度
+  - 前一个 entry 的长度为 0-253，`<prevlen from 0 to 253> <encoding> <entry>`
+  - 如果大于 253，`0xFE <4 bytes unsigned little endian prevlen> <encoding> <entry>`
+- encoding: 编码，前面 2bit 用来记录数据类型，后面的 xbit 用来记录数据长度。
+  - |00pppppp| - 1 byte （数字类型）
+  - |01pppppp|qqqqqqqq| - 2 bytes （14 bits 以大端存储长度数据）
+  - |10000000|qqqqqqqq|rrrrrrrr|ssssssss|tttttttt| - 5 bytes （4 bytes 存储长度数据）
+- entry-data: 数据
+
+## QuickList
