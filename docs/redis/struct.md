@@ -63,6 +63,76 @@ struct __attribute__ ((__packed__)) sdshdr64 {
 };
 ```
 
+### 扩容
+
+sds 扩展空间的方式是根据需要选择合适的扩展策略，通常是按照一定的倍数扩展，例如翻倍扩展。因为不是所有字符串都会被频繁修改，比如 key 值就不需要频繁更改，所以这里也保留不使用扩展策略的方法。
+
+- 扩展逻辑
+
+```c
+if (greedy == 1) {
+     if (newlen < SDS_MAX_PREALLOC)
+         newlen *= 2;
+     else
+         newlen += SDS_MAX_PREALLOC;
+ }
+```
+
+```c
+sds _sdsMakeRoomFor(sds s, size_t addlen, int greedy) {
+    void *sh, *newsh;
+    size_t avail = sdsavail(s);
+    size_t len, newlen, reqlen;
+    char type, oldtype = s[-1] & SDS_TYPE_MASK;
+    int hdrlen;
+    size_t usable;
+
+    /* Return ASAP if there is enough space left. */
+    if (avail >= addlen) return s;
+
+    len = sdslen(s);
+    sh = (char*)s-sdsHdrSize(oldtype);
+    reqlen = newlen = (len+addlen);
+    assert(newlen > len);   /* Catch size_t overflow */
+    if (greedy == 1) {
+        if (newlen < SDS_MAX_PREALLOC)
+            newlen *= 2;
+        else
+            newlen += SDS_MAX_PREALLOC;
+    }
+
+    type = sdsReqType(newlen);
+
+    /* Don't use type 5: the user is appending to the string and type 5 is
+     * not able to remember empty space, so sdsMakeRoomFor() must be called
+     * at every appending operation. */
+    if (type == SDS_TYPE_5) type = SDS_TYPE_8;
+
+    hdrlen = sdsHdrSize(type);
+    assert(hdrlen + newlen + 1 > reqlen);  /* Catch size_t overflow */
+    if (oldtype==type) {
+        newsh = s_realloc_usable(sh, hdrlen+newlen+1, &usable);
+        if (newsh == NULL) return NULL;
+        s = (char*)newsh+hdrlen;
+    } else {
+        /* Since the header size changes, need to move the string forward,
+         * and can't use realloc */
+        newsh = s_malloc_usable(hdrlen+newlen+1, &usable);
+        if (newsh == NULL) return NULL;
+        memcpy((char*)newsh+hdrlen, s, len+1);
+        s_free(sh);
+        s = (char*)newsh+hdrlen;
+        s[-1] = type;
+        sdssetlen(s, len);
+    }
+    usable = usable-hdrlen-1;
+    if (usable > sdsTypeMaxSize(type))
+        usable = sdsTypeMaxSize(type);
+    sdssetalloc(s, usable);
+    return s;
+}
+```
+
 ## intset
 
 intset 是 redis 内部用来存储整数集合的数据结构，它是一个有序的集合，不允许重复元素。因为底层是二分法查找，比较适合数据量小的场景使用，当数据量大的时候，效率就有所下降了。
@@ -88,6 +158,8 @@ typedef struct intset {
 
 - length: 数组的长度
 - contents: 内容
+
+### 扩容
 
 intset 的实现是一个数组，数组的每个元素的大小是固定的，根据 encoding 来决定。如果新添加的元素超过了 encoding 的范围，intset 会自动扩容。利用类型升级机制，时间换空间，节省内存空间。
 
@@ -498,3 +570,5 @@ int dictRehash(dict *d, int n) {
     return 1;
 }
 ```
+
+## ZipList
