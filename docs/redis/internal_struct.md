@@ -1,4 +1,4 @@
-# redis
+# redis 内部数据结构
 
 ## sds
 
@@ -629,3 +629,83 @@ unsigned char *ziplistNew(void) {
 - entry-data: 数据
 
 ## QuickList
+
+Quicklist 是一种优化的链表数据结构，用于存储列表类型的数据。如果 ZipList 的 entry 较多的时候，做增删操作，需要申请一大块内存，会导致内存效率很低。Quicklist 主要用于解决 ZipList 在处理大量元素时效率低的问题，通过限制 ZipList 的长度来优化性能，通过创建多个 ZipList 分片来存储数据解决长度问题。
+
+```c
+typedef struct quicklistNode {
+    struct quicklistNode *prev;
+    struct quicklistNode *next;
+    unsigned char *entry;
+    size_t sz;             /* entry size in bytes */
+    unsigned int count : 16;     /* count of items in listpack */
+    unsigned int encoding : 2;   /* RAW==1 or LZF==2 */
+    unsigned int container : 2;  /* PLAIN==1 or PACKED==2 */
+    unsigned int recompress : 1; /* was this node previous compressed? */
+    unsigned int attempted_compress : 1; /* node can't compress; too small */
+    unsigned int dont_compress : 1; /* prevent compression of entry that will be used later */
+    unsigned int extra : 9; /* more bits to steal for future usage */
+} quicklistNode;
+
+typedef struct quicklist {
+    quicklistNode *head;
+    quicklistNode *tail;
+    unsigned long count;        /* total count of all entries in all listpacks */
+    unsigned long len;          /* number of quicklistNodes */
+    signed int fill : QL_FILL_BITS;       /* fill factor for individual nodes */
+    unsigned int compress : QL_COMP_BITS; /* depth of end nodes not to compress;0=off */
+    unsigned int bookmark_count: QL_BM_BITS;
+    quicklistBookmark bookmarks[];
+} quicklist;
+```
+
+- quicklist
+  - head / tail: 头尾节点
+  - count: 所有 zipList 的 entry 数量
+  - len: zipList 的数量
+  - fill: 所有 zipList 的 entry 数量上限
+  - compress: 不压缩的节点数量
+  - bookmarks:
+- quicklistNode
+  - prev / next: 前后节点
+  - entry: zipList 的指针
+  - sz: ziplist 的字节大小
+  - count: ziplist 的 entry 数量
+  - encoding: ziplist 的编码方式 1: RAW 2: lzf 压缩
+  - container: 数据容器类型 1: PLAIN 2: PACKED
+  - recompress: 是否压缩
+    - 对于头部和尾部的节点，通常是经常被访问的，保持这部分节点的大小不变可以提高访问效率，所以中间部分的 quicklist 会压缩以节省内存。
+
+## SkipList
+
+SkipList 用于优化链表遍历，保存链表的多个节点，快速定位节点 index，节点含有多个指针，n + 1 级指针数量 相当于指针的跨度不同，级别越大跨度越大，最多允许 32 级指针。
+
+```c
+typedef struct zskiplistNode {
+    sds ele;
+    double score;
+    struct zskiplistNode *backward;
+    struct zskiplistLevel {
+        struct zskiplistNode *forward;
+        unsigned long span;
+    } level[];
+} zskiplistNode;
+
+typedef struct zskiplist {
+    struct zskiplistNode *header, *tail;
+    unsigned long length;
+    int level;
+} zskiplist;
+```
+
+- zskiplist
+  - header/tail： 头尾节点
+  - length： 长度
+  - level： zskiplist 等级
+- zskiplistNode
+  - ele： 节点存储的值
+  - score： 节点分数，排序，查找用
+  - backward： 前一个节点指针
+  - level：多个索引数组
+    - forward：下一个节点指针
+    - span：索引跨度
