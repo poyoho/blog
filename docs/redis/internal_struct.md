@@ -733,6 +733,20 @@ struct redisObject {
   * 3 zset
   * 4 hash
 * encoding: 底层编码
+```c
+#OBJ_ENCODING_RAW 0     /* Raw representation */
+#OBJ_ENCODING_INT 1     /* Encoded as integer */
+#OBJ_ENCODING_HT 2      /* Encoded as hash table */
+#OBJ_ENCODING_ZIPMAP 3  /* No longer used: old hash encoding. */
+#OBJ_ENCODING_LINKEDLIST 4 /* No longer used: old list encoding. */
+#OBJ_ENCODING_ZIPLIST 5 /* No longer used: old list/hash/zset encoding. */
+#OBJ_ENCODING_INTSET 6  /* Encoded as intset */
+#OBJ_ENCODING_SKIPLIST 7  /* Encoded as skiplist */
+#OBJ_ENCODING_EMBSTR 8  /* Embedded sds string encoding */
+#OBJ_ENCODING_QUICKLIST 9 /* Encoded as linked list of listpacks */
+#OBJ_ENCODING_STREAM 10 /* Encoded as a radix tree of listpacks */
+#OBJ_ENCODING_LISTPACK 11 /* Encoded as a listpack */
+```
 * lru: 最后一次被访问的时间，用于内存回收
 * refcount: 引用计数器
 * ptr: 指针，保存真实数据
