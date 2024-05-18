@@ -709,3 +709,30 @@ typedef struct zskiplist {
   - level：多个索引数组
     - forward：下一个节点指针
     - span：索引跨度
+
+## RedisObject
+
+每个redis数据都会使用RedisObject来封装。
+
+```c
+struct redisObject {
+    unsigned type:4;
+    unsigned encoding:4;
+    unsigned lru:LRU_BITS; /* LRU time (relative to global lru_clock) or
+                            * LFU data (least significant 8 bits frequency
+                            * and most significant 16 bits access time). */
+    int refcount;
+    void *ptr;
+};
+```
+
+* type: 类型
+  * 0 string
+  * 1 list
+  * 2 set
+  * 3 zset
+  * 4 hash
+* encoding: 底层编码
+* lru: 最后一次被访问的时间，用于内存回收
+* refcount: 引用计数器
+* ptr: 指针，保存真实数据
