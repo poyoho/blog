@@ -22,4 +22,9 @@ xattr -c ./Chromium.app
 
 ## Safari
 
-// TODO
+从苹果官网下载对应的 Safari 浏览器，然后解压，就可以使用了。
+
+|version|link|
+|-------|-----|
+|15.6.1|https://swcdn.apple.com/content/downloads/42/33/012-57329-A_41P2VU6UHN/5fw5vna27fdw4mqfak5adj3pjpxvo9hgh7/Safari15.6.1CatalinaAuto.pkg|
+|16.6.1|http://swcdn.apple.com/content/downloads/47/04/042-27539-A_JOWCKWG03T/q1askvrrids8ykmi9ok73aqmj05kzskcya/Safari16.6.1BigSurAuto.pkg|
